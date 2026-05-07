@@ -662,13 +662,12 @@ var SHEETS_URL='https://script.google.com/macros/s/AKfycbwpEqkhMCi-gTa6dRTgqdu19
 
 function enviarParaSheets(dados){
   if(!SHEETS_URL||SHEETS_URL==='COLE_AQUI_A_URL_DO_APPS_SCRIPT') return;
+  // Usar XMLHttpRequest com redirect seguido — compatível com Apps Script
   try{
-    fetch(SHEETS_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(dados),
-      mode:'no-cors'
-    });
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', SHEETS_URL, true);
+    xhr.setRequestHeader('Content-Type', 'text/plain');
+    xhr.send(JSON.stringify(dados));
   }catch(e){}
 }
 var _premioAtual=null;

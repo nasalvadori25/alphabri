@@ -662,12 +662,15 @@ var SHEETS_URL='https://script.google.com/macros/s/AKfycbwpEqkhMCi-gTa6dRTgqdu19
 
 function enviarParaSheets(dados){
   if(!SHEETS_URL||SHEETS_URL==='COLE_AQUI_A_URL_DO_APPS_SCRIPT') return;
-  // Usar XMLHttpRequest com redirect seguido — compatível com Apps Script
   try{
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', SHEETS_URL, true);
-    xhr.setRequestHeader('Content-Type', 'text/plain');
-    xhr.send(JSON.stringify(dados));
+    // JSONP via GET — único método que funciona com Apps Script sem CORS
+    var params = encodeURIComponent(JSON.stringify(dados));
+    var url = SHEETS_URL + '?dados=' + params + '&cb=_cb' + Date.now();
+    var s = document.createElement('script');
+    s.src = url;
+    s.onload = function(){ document.body.removeChild(s); };
+    s.onerror = function(){ document.body.removeChild(s); };
+    document.body.appendChild(s);
   }catch(e){}
 }
 var _premioAtual=null;

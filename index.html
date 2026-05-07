@@ -663,13 +663,20 @@ var SHEETS_URL='https://script.google.com/macros/s/AKfycbwpEqkhMCi-gTa6dRTgqdu19
 function enviarParaSheets(dados){
   if(!SHEETS_URL||SHEETS_URL==='COLE_AQUI_A_URL_DO_APPS_SCRIPT') return;
   try{
-    // JSONP via GET — único método que funciona com Apps Script sem CORS
-    var params = encodeURIComponent(JSON.stringify(dados));
-    var url = SHEETS_URL + '?dados=' + params + '&cb=_cb' + Date.now();
+    // Enviar campos separados via GET para evitar problema de encoding
+    var url = SHEETS_URL +
+      '?tipo='     + encodeURIComponent(dados.tipo||'') +
+      '&nome='     + encodeURIComponent(dados.nome||'') +
+      '&fone='     + encodeURIComponent(dados.fone||'') +
+      '&premio='   + encodeURIComponent(dados.premio||'') +
+      '&codigo='   + encodeURIComponent(dados.codigo||'') +
+      '&validade=' + encodeURIComponent(dados.validade||'') +
+      '&dataHora=' + encodeURIComponent(dados.dataHora||'') +
+      '&cb=_cb'    + Date.now();
     var s = document.createElement('script');
     s.src = url;
-    s.onload = function(){ document.body.removeChild(s); };
-    s.onerror = function(){ document.body.removeChild(s); };
+    s.onload = function(){ if(document.body.contains(s)) document.body.removeChild(s); };
+    s.onerror = function(){ if(document.body.contains(s)) document.body.removeChild(s); };
     document.body.appendChild(s);
   }catch(e){}
 }

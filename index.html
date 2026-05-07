@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AlphaBri – Jogo dos Doces</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{--gold:#C9A84C;--gold-l:#E8C96A;--gold-d:#8B6914;--black:#0A0A0A;--white:#F5F0E8;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--black);font-family:'Georgia',serif;color:var(--white);touch-action:none;user-select:none;-webkit-user-select:none;}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;z-index:10;}
+.screen.on{display:flex;}
+.logo{font-size:clamp(32px,9vw,56px);color:var(--gold);letter-spacing:5px;text-shadow:0 0 30px rgba(201,168,76,.5);line-height:1;}
+.logo b{color:var(--white);}
+.logo-sub{font-size:clamp(9px,2.5vw,12px);letter-spacing:8px;color:var(--gold-d);text-transform:uppercase;margin-top:4px;}
+.line{width:60px;height:1px;margin:14px auto;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+#sStart{background:radial-gradient(circle at 20% 15%,rgba(255,210,122,.20),transparent 28%),radial-gradient(circle at 80% 18%,rgba(255,105,180,.16),transparent 30%),linear-gradient(180deg,#40206f 0%,#8b3f87 42%,#ffb86b 100%);overflow:hidden;}
+#sStart:before{content:'';position:absolute;inset:auto -10% 0 -10%;height:38%;background:radial-gradient(ellipse at 15% 100%,#7a3f24 0 18%,transparent 19%),radial-gradient(ellipse at 45% 100%,#9a5732 0 22%,transparent 23%),radial-gradient(ellipse at 82% 100%,#6f3b25 0 20%,transparent 21%);opacity:.75;}
+#sStart>*{position:relative;z-index:1;}
+.desc{font-size:clamp(13px,3.5vw,16px);color:rgba(245,240,232,.65);line-height:1.8;max-width:300px;margin-bottom:16px;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:22px;}
+.chip{background:linear-gradient(135deg,#1a1200,#231800);border:1px solid var(--gold-d);border-radius:20px;padding:5px 13px;font-size:clamp(11px,3vw,13px);color:var(--gold-l);}
+.hs-bar{display:flex;align-items:center;gap:6px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:20px;padding:5px 16px;font-size:clamp(12px,3.5vw,15px);color:var(--gold);margin-bottom:14px;}
+.hs-bar span{color:var(--gold-l);font-weight:700;}
+.btn{background:linear-gradient(135deg,var(--gold-d),var(--gold),var(--gold-l));color:var(--black);font-family:'Georgia',serif;font-size:clamp(14px,4vw,19px);font-weight:700;letter-spacing:3px;text-transform:uppercase;border:none;border-radius:999px;padding:clamp(11px,3vw,15px) clamp(28px,7vw,48px);cursor:pointer;box-shadow:0 10px 0 rgba(90,55,10,.65),0 0 25px rgba(201,168,76,.35);transition:transform .12s ease,filter .12s ease;}
+.btn:active{opacity:.9;transform:translateY(5px);box-shadow:0 5px 0 rgba(90,55,10,.65),0 0 18px rgba(201,168,76,.35);}
+.btn2{background:transparent;border:1px solid var(--gold-d);color:var(--gold);font-family:'Georgia',serif;font-size:clamp(12px,3.5vw,16px);letter-spacing:2px;text-transform:uppercase;padding:10px 28px;border-radius:999px;cursor:pointer;margin-top:10px;backdrop-filter:blur(6px);}
+#sGame{padding:0;background:var(--black);}
+#gc{display:block;position:absolute;inset:0;width:100%;height:100%;}
+#sOver{background:radial-gradient(ellipse at 50% 50%,#1a0000,var(--black) 70%);}
+.over-title{font-size:clamp(28px,8vw,48px);color:#cc3333;text-shadow:0 0 20px rgba(200,50,50,.5);letter-spacing:3px;}
+.over-score{font-size:clamp(14px,4vw,18px);color:var(--gold);margin:6px 0;}
+.over-hint{font-size:clamp(11px,3vw,14px);color:rgba(245,240,232,.45);}
+#sRecord{background:radial-gradient(ellipse at 50% 30%,#1a1000,var(--black) 60%);}
+.crown{font-size:clamp(56px,16vw,90px);animation:pop .5s cubic-bezier(.175,.885,.32,1.275) forwards;}
+.rec-title{font-size:clamp(24px,7vw,42px);color:var(--gold-l);letter-spacing:3px;text-shadow:0 0 30px rgba(201,168,76,.7);}
+.rec-num{font-size:clamp(42px,13vw,80px);color:var(--gold);text-shadow:0 0 20px rgba(201,168,76,.5);line-height:1;}
+.rec-label{font-size:clamp(11px,3vw,13px);color:rgba(245,240,232,.4);letter-spacing:4px;text-transform:uppercase;}
+.rec-sub{font-size:clamp(12px,3vw,14px);color:rgba(245,240,232,.5);max-width:260px;line-height:1.6;margin:10px auto 16px;}
+#sRol{background:radial-gradient(ellipse at 50% 30%,#1a1200,var(--black) 60%);}
+.rol-title{font-size:clamp(18px,5vw,28px);color:var(--gold);letter-spacing:2px;margin-bottom:8px;}
+.rol-wrap{position:relative;width:min(260px,70vw);height:min(260px,70vw);margin:0 auto 10px;}
+#rc{width:100%;height:100%;filter:drop-shadow(0 0 18px rgba(201,168,76,.4));}
+
+.ptr{position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:22px solid var(--gold);filter:drop-shadow(0 2px 5px rgba(201,168,76,.8));z-index:5;}
+.btn-spin{background:linear-gradient(135deg,var(--gold-d),var(--gold));color:var(--black);font-family:'Georgia',serif;font-size:clamp(14px,4vw,18px);font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;border-radius:4px;padding:11px 34px;cursor:pointer;box-shadow:0 0 18px rgba(201,168,76,.3);}
+.btn-spin:disabled{opacity:.35;cursor:default;}
+#sResult{text-align:center;gap:0;}
+#sResult.win{background:radial-gradient(ellipse at 50% 30%,#1a1200,var(--black) 65%);}
+#sResult.lose{background:radial-gradient(ellipse at 50% 50%,#0d0d0d,var(--black) 70%);}
+.res-emoji{font-size:clamp(52px,15vw,88px);margin-bottom:8px;animation:pop .5s cubic-bezier(.175,.885,.32,1.275) forwards;}
+.res-hl{font-size:clamp(22px,6vw,36px);color:var(--gold);letter-spacing:2px;margin-bottom:6px;}
+.res-prize{font-size:clamp(16px,4.5vw,24px);color:var(--gold-l);font-weight:700;margin-bottom:10px;text-shadow:0 0 14px rgba(201,168,76,.5);}
+.res-sub{font-size:clamp(11px,3vw,14px);color:rgba(245,240,232,.5);max-width:270px;line-height:1.6;margin:0 auto 14px;}
+.res-validade{font-size:clamp(10px,2.5vw,12px);color:#f5a623;margin-bottom:14px;letter-spacing:1px;}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:200;overflow:hidden;}
+.cp{position:absolute;top:-20px;opacity:0;animation:fall linear forwards;}
+@keyframes fall{0%{transform:translateY(0) rotate(0deg);opacity:1;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+@keyframes pop{0%{transform:scale(0);opacity:0;}100%{transform:scale(1);opacity:1;}}
+/* Tela cadastro */
+#sCadastro{text-align:center;}
+.cad-input{width:82%;padding:11px 14px;background:#111;border:1px solid #C9A84C44;border-radius:4px;color:#fff;font-size:clamp(14px,3.5vw,16px);font-family:Georgia,serif;margin-bottom:12px;outline:none;box-sizing:border-box;}
+.cad-input:focus{border-color:#C9A84C;}
+.cad-label{font-size:clamp(10px,2.5vw,12px);color:#C9A84C;letter-spacing:2px;text-align:left;width:82%;display:block;margin:0 auto 4px;}
+.cad-skip{font-size:11px;color:#555;text-decoration:underline;cursor:pointer;margin-top:8px;display:inline-block;}
+/* Admin tabs */
+.adm-tab{padding:7px 14px;font-size:12px;border:1px solid #C9A84C44;background:transparent;color:#888;cursor:pointer;border-radius:4px;}
+.adm-tab.on{background:#C9A84C22;color:#C9A84C;border-color:#C9A84C;}
+.adm-lembrar-row{border-bottom:1px solid #1a1a1a;padding:8px 0;}
+.adm-badge{display:inline-block;background:#c0392b;color:#fff;border-radius:99px;font-size:10px;font-weight:700;padding:2px 7px;margin-left:6px;vertical-align:middle;}
+.alerta-doce{background:rgba(201,168,76,.08);border:1px solid #C9A84C55;border-radius:6px;padding:10px 12px;margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<div id="sStart" class="screen on">
+  <div style="margin-bottom:20px">
+    <div class="logo" id="logoTap" onclick="adminTap()">AlphaBri</div>
+    <div class="logo-sub">Bistrô</div>
+    <div class="line"></div>
+  </div>
+  <div class="hs-bar">🏆 Recorde: <span id="hsVal">0</span> pts</div>
+  <p class="desc">Voe pelo bistrô, desvie dos inimigos e concorra a um doce artesanal!</p>
+  <div class="chips">
+    <div class="chip">🎂 Bolo</div><div class="chip">🍮 Pudim</div>
+    <div class="chip">🍪 Cookie</div><div class="chip">🍫 Brigadeiro</div>
+  </div>
+  <button class="btn" onclick="startGame()">Jogar</button>
+</div>
+
+<div id="sGame" class="screen">
+  <canvas id="gc"></canvas>
+</div>
+
+<div id="sOver" class="screen">
+  <div class="logo" style="font-size:clamp(22px,6vw,36px)">AlphaBri</div>
+  <div class="line"></div>
+  <div class="over-title">Ops!</div>
+  <div class="over-score" id="overScore">0 pontos</div>
+  <div class="over-hint" id="overHint">Passe 5 inimigos para girar a roleta!</div>
+  <div style="height:18px"></div>
+  <button class="btn" onclick="startGame()">Tentar Novamente</button>
+  <button class="btn2" onclick="go('sStart')">Início</button>
+</div>
+
+<div id="sRecord" class="screen">
+  <div class="crown">👑</div>
+  <div class="rec-title">Novo Recorde!</div>
+  <div class="line"></div>
+  <div class="rec-num" id="recNum">0</div>
+  <div class="rec-label">pontos</div>
+  <p class="rec-sub">Incrível! Você bateu o recorde do AlphaBri! Agora gire a roleta! 🎉</p>
+  <button class="btn" onclick="openRoleta(true)">Girar a Roleta</button>
+</div>
+
+<div id="sRol" class="screen">
+  <div class="logo" style="font-size:clamp(18px,5vw,28px)">AlphaBri</div>
+  <div class="logo-sub" style="margin-bottom:2px">Bistrô</div>
+  <div class="line" style="margin:8px auto"></div>
+  <div class="rol-title">Gire e descubra seu prêmio!</div>
+  <div class="rol-wrap">
+    <div class="ptr"></div>
+    <canvas id="rc"></canvas>
+  </div>
+  <button class="btn-spin" id="btnSpin" onclick="spin()">Girar</button>
+</div>
+
+<!-- TELA RESULTADO -->
+<div id="sResult" class="screen">
+  <div class="res-emoji" id="resEmoji">🎉</div>
+  <div class="logo" style="font-size:clamp(18px,5vw,28px);margin-bottom:4px">AlphaBri</div>
+  <div class="line" style="margin:8px auto"></div>
+  <div class="res-hl" id="resHl">Parabéns!</div>
+  <div class="res-prize" id="resPrize"></div>
+  <p class="res-sub" id="resSub"></p>
+  <div class="res-validade" id="resValidade"></div>
+  <button class="btn" id="btnWpp" onclick="irCadastro()" style="background:linear-gradient(135deg,#1a6e35,#25a550);font-size:clamp(13px,3.5vw,15px);padding:11px 22px;margin-bottom:8px">📲 Receber no WhatsApp</button>
+  <button class="btn" onclick="startGame()" style="font-size:clamp(12px,3vw,14px);padding:9px 22px;margin-bottom:6px">Jogar Novamente</button>
+  <button class="btn2" onclick="go('sStart')">Início</button>
+</div>
+
+<!-- TELA CADASTRO -->
+<div id="sCadastro" class="screen">
+  <div class="logo" style="font-size:clamp(18px,5vw,26px);margin-bottom:4px">AlphaBri</div>
+  <div class="logo-sub" style="margin-bottom:4px">Bistrô</div>
+  <div class="line" style="margin:10px auto 20px"></div>
+  <div style="font-size:clamp(20px,5vw,26px);margin-bottom:6px">📲</div>
+  <div style="color:var(--gold);font-size:clamp(14px,4vw,18px);letter-spacing:1px;margin-bottom:6px">Receba seu prêmio no celular!</div>
+  <p style="font-size:clamp(11px,2.8vw,13px);color:rgba(245,240,232,.5);margin:0 auto 20px;max-width:280px;line-height:1.5">Cadastre seus dados e em alguns minutos você receberá as informações do seu prêmio no WhatsApp! 🎁</p>
+  <span class="cad-label">Seu nome</span>
+  <input id="cadNome" class="cad-input" type="text" placeholder="Como você se chama?" maxlength="40"/>
+  <span class="cad-label">Seu WhatsApp</span>
+  <input id="cadFone" class="cad-input" type="tel" placeholder="(11) 99999-9999" maxlength="15"/>
+  <button class="btn" onclick="enviarWpp()" style="margin-top:6px;background:linear-gradient(135deg,#1a6e35,#25a550)">Confirmar e Salvar ✓</button>
+  <span class="cad-skip" onclick="go('sStart')">Pular e jogar novamente</span>
+</div>
+
+
+<!-- TELA ADMIN -->
+<div id="sAdmin" class="screen" style="overflow-y:auto;padding:16px;text-align:left">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div class="logo" style="font-size:20px">Painel Admin</div>
+    <button class="btn2" onclick="go('sStart')" style="padding:5px 12px;font-size:11px">Fechar</button>
+  </div>
+  <div class="line" style="margin:0 0 12px 0"></div>
+  <!-- alerta doces pendentes -->
+  <div id="alertaDoces" style="display:none;margin-bottom:12px"></div>
+  <!-- abas -->
+  <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+    <button class="adm-tab on" id="tabCupons" onclick="adminTab('cupons')">🏷️ Cupons</button>
+    <button class="adm-tab" id="tabHistorico" onclick="adminTab('historico')">📋 Histórico</button>
+    <button class="adm-tab" id="tabLembrar" onclick="adminTab('lembrar')">⏰ Lembrar</button>
+  </div>
+  <!-- painel cupons -->
+  <div id="painelCupons">
+    <div id="adminList" style="font-size:12px;color:#fff;line-height:1.8"></div>
+    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+      <button class="btn2" onclick="adminClearExpired()" style="font-size:11px;padding:6px 12px">Limpar Expirados</button>
+      <button class="btn2" onclick="adminClearAll()" style="font-size:11px;padding:6px 12px;background:rgba(180,30,30,.15);border-color:#a02020">Limpar Todos</button>
+    </div>
+  </div>
+  <!-- painel histórico -->
+  <div id="painelHistorico" style="display:none">
+    <div id="adminHistList" style="font-size:12px;color:#fff;line-height:1.8"></div>
+    <div style="margin-top:12px">
+      <button class="btn2" onclick="adminClearHist()" style="font-size:11px;padding:6px 12px;background:rgba(180,30,30,.15);border-color:#a02020">Limpar Histórico</button>
+    </div>
+  </div>
+  <!-- painel lembrar -->
+  <div id="painelLembrar" style="display:none">
+    <div style="font-size:11px;color:#888;margin-bottom:10px">Clientes com cupom vencendo em até 2 dias:</div>
+    <div id="adminLembrarList" style="font-size:12px;color:#fff"></div>
+  </div>
+</div>
+
+<div id="confetti"></div>
+
+<script>
+var $ = function(id){ return document.getElementById(id); };
+
+function go(id){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('on'); });
+  $(id).classList.add('on');
+}
+
+function getHS(){ try{ return parseInt(localStorage.getItem('ab_hs'))||0; }catch(e){ return 0; } }
+function setHS(v){ try{ localStorage.setItem('ab_hs',v); }catch(e){} }
+function refreshHS(){ $('hsVal').textContent = getHS(); }
+refreshHS();
+
+// ── JOGO ──
+var NEED = 5;
+// Física baseada em tempo real — igual em qualquer dispositivo
+var GRAV_S  = 1100;  // px/s² — reduzido para GM92
+var JV_S    = -420;  // px/s no pulo — reduzido para GM92
+var SPD_MIN = 120;   // px/s velocidade inicial
+var SPD_MAX = 260;   // px/s velocidade máxima
+var SI_MIN  = 2200;  // ms intervalo mínimo entre inimigos — aumentado para GM92
+var SI_START= 3200;  // ms intervalo inicial — aumentado para GM92
+var BUGS = ['🐜','🐜','🪰','🪰','🪳','🐝'];
+
+var C, X, bird, obs, sc, running, raf;
+var lastTime, lastSpawn;
+
+function initC(){
+  C = $('gc');
+  X = C.getContext('2d');
+  function resize(){
+    C.width = window.innerWidth;
+    C.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  C.addEventListener('pointerdown', function(e){ e.preventDefault(); if(running) bird.vy = JV_S; });
+  document.addEventListener('keydown', function(e){ if(e.code==='Space'&&running) bird.vy=JV_S; });
+}
+
+function resetBird(){
+  var r = Math.min(52, C.width*0.11);
+  bird = { x: C.width*0.2, y: C.height/2, vy:0, r:r };
+  lastTime = null;
+  lastSpawn = null;
+  sc = 0;
+}
+
+function spawnObs(){
+  // GAP diminui com o score mas nunca menor que 2.4x o raio da bola
+  var minGap = Math.max(bird.r * 2.4 * 2, 140); // diâmetro * 2.4, min 140px
+  var baseGap = C.height * 0.42;
+  var t = Math.min(sc / 25, 1);
+  var GAP = Math.max(minGap, baseGap - t * (baseGap - minGap));
+  var mg = 90;
+  var minT = mg, maxT = C.height - GAP - mg - 40;
+  if(maxT<=minT) return;
+  var topY = minT + Math.random()*(maxT-minT);
+  var emoji = BUGS[Math.floor(Math.random()*BUGS.length)];
+  obs.push({ x: C.width+10, topY:topY, gap:GAP, emoji:emoji, passed:false });
+}
+
+// partículas, nuvens e elementos decorativos do cenário cartoon
+var particles = [], clouds = [], floatingSweets = [], scorePops = [];
+function initParticles(){
+  particles = []; clouds = []; floatingSweets = []; scorePops = [];
+  var cols=['#ff6eb4','#ffce54','#a8e6cf','#fddb92','#ff8b94','#c9a84c','#ffffff'];
+  for(var i=0;i<18;i++){
+    particles.push({x:Math.random()*C.width,y:Math.random()*C.height,r:1+Math.random()*3.2,col:cols[Math.floor(Math.random()*cols.length)],spd:.18+Math.random()*.72,amp:15+Math.random()*45,offset:Math.random()*Math.PI*2});
+  }
+  for(var c=0;c<4;c++){
+    clouds.push({x:Math.random()*C.width,y:28+Math.random()*C.height*.34,s:.55+Math.random()*.7,spd:8+Math.random()*18,alpha:.35+Math.random()*.35});
+  }
+  var sweets=['🍮','🍪','🍫','🧁','🍰'];
+  for(var s=0;s<4;s++){
+    floatingSweets.push({emoji:sweets[s%sweets.length],x:Math.random()*C.width,y:80+Math.random()*C.height*.55,s:18+Math.random()*14,spd:10+Math.random()*18,amp:8+Math.random()*18,off:Math.random()*6.28});
+  }
+}
+function rr(x,y,w,h,r){ X.beginPath(); X.roundRect(x,y,w,h,r); }
+function addScorePop(x,y){ scorePops.push({x:x,y:y,life:1}); }
+function drawCloud(cl){
+  X.save(); X.globalAlpha=cl.alpha; X.fillStyle='#fff6d7'; X.shadowColor='rgba(255,255,255,.55)'; X.shadowBlur=12;
+  var x=cl.x,y=cl.y,s=cl.s;
+  X.beginPath();
+  X.arc(x,y,24*s,Math.PI*.5,Math.PI*1.5); X.arc(x+24*s,y-18*s,28*s,Math.PI,Math.PI*1.85); X.arc(x+56*s,y-14*s,25*s,Math.PI*1.15,Math.PI*2); X.arc(x+75*s,y,22*s,Math.PI*1.5,Math.PI*.5); X.closePath(); X.fill();
+  X.restore();
+}
+function drawHill(base, color, offset, scale){
+  X.save(); X.fillStyle=color; X.beginPath(); X.moveTo(-80,base);
+  for(var x=-80;x<=C.width+100;x+=80){
+    var y=base-Math.sin((x+offset)*0.009)*28*scale-30*scale;
+    X.quadraticCurveTo(x+40,y-35*scale,x+80,base);
+  }
+  X.lineTo(C.width+100,C.height); X.lineTo(-80,C.height); X.closePath(); X.fill(); X.restore();
+}
+function drawCandyTree(x,y,s,t){
+  X.save(); X.translate(x,y); X.scale(s,s);
+  X.fillStyle='#7b3f1d'; rr(-8,18,16,54,8); X.fill();
+  var bob=Math.sin(t*2+x*.01)*3;
+  var g=X.createRadialGradient(-12,-8+bob,4,0,0+bob,48); g.addColorStop(0,'#fff2a8'); g.addColorStop(.45,'#ff8ebd'); g.addColorStop(1,'#cf4fa0');
+  X.fillStyle=g; X.shadowColor='rgba(255,120,190,.6)'; X.shadowBlur=10;
+  X.beginPath(); X.arc(0,bob,38,0,Math.PI*2); X.fill();
+  X.shadowBlur=0; X.fillStyle='rgba(255,255,255,.55)'; X.beginPath(); X.arc(-13,-14+bob,10,0,Math.PI*2); X.fill();
+  X.restore();
+}
+function drawBg(ts){
+  var t=(ts||0)/1000;
+  X.fillStyle='#0A0A0A'; X.fillRect(0,0,C.width,C.height);
+
+  clouds.forEach(function(cl){ cl.x-=cl.spd/60; if(cl.x<-140)cl.x=C.width+80; drawCloud(cl); });
+  // floatingSweets removido para performance no GM92
+
+  particles.forEach(function(p){
+    p.x-=p.spd; if(p.x<-10)p.x=C.width+10;
+    var py=p.y+Math.sin(t*.8+p.offset)*p.amp;
+    X.save(); X.globalAlpha=.55; X.fillStyle=p.col; X.shadowColor=p.col; X.shadowBlur=4; X.beginPath(); X.arc(p.x,py,p.r,0,Math.PI*2); X.fill(); X.restore();
+  });
+
+  drawHill(C.height*.76,'rgba(96,54,135,.55)',t*18,1.15);
+  drawHill(C.height*.84,'rgba(118,72,93,.75)',t*30,.95);
+  drawHill(C.height*.92,'#7d4a29',t*40,.65);
+
+  // árvores removidas para performance no GM92
+
+  var groundY=C.height-48;
+  var grd=X.createLinearGradient(0,groundY,0,C.height); grd.addColorStop(0,'#7bd33f'); grd.addColorStop(.5,'#3e9728'); grd.addColorStop(1,'#2f641d');
+  X.fillStyle=grd; X.fillRect(0,groundY,C.width,48);
+  X.fillStyle='rgba(255,255,255,.3)'; X.fillRect(0,groundY,C.width,3);
+  X.fillStyle='rgba(80,40,20,.22)';
+  for(var m=-40;m<C.width+60;m+=44){ X.beginPath(); X.arc(m-(t*80%44),groundY+48,28,Math.PI,0); X.fill(); }
+  X.fillStyle='#64bd32';
+  for(var g2=-20;g2<C.width+40;g2+=24){
+    var gx=g2-(t*95%24); X.beginPath(); X.moveTo(gx,groundY+5); X.quadraticCurveTo(gx+5,groundY-9,gx+11,groundY+5); X.quadraticCurveTo(gx+17,groundY-5,gx+23,groundY+5); X.fill();
+  }
+
+  var scoreStr=String(sc);
+  X.save();
+  var pillW=Math.max(82,scoreStr.length*30+48),pillH=52,pillX=C.width/2-pillW/2,pillY=12;
+  var pillG=X.createLinearGradient(pillX,0,pillX+pillW,0); pillG.addColorStop(0,'#ff8a38'); pillG.addColorStop(.55,'#ff4ea1'); pillG.addColorStop(1,'#8957ff');
+  X.fillStyle='rgba(0,0,0,.22)'; rr(pillX+3,pillY+6,pillW,pillH,28); X.fill();
+  X.fillStyle=pillG; rr(pillX,pillY,pillW,pillH,28); X.fill();
+  X.strokeStyle='rgba(255,255,255,.55)'; X.lineWidth=2; X.stroke();
+  X.font='bold '+Math.max(28,pillH*.62)+'px Georgia'; X.fillStyle='#fff'; X.textAlign='center'; X.shadowColor='rgba(0,0,0,.35)'; X.shadowBlur=7; X.fillText(scoreStr,C.width/2,pillY+pillH*.72); X.restore();
+
+  var left=Math.max(0,NEED-sc);
+  if(left>0){ X.save(); X.font='bold '+Math.max(12,C.width*.03)+'px Georgia'; X.fillStyle='rgba(255,255,255,.72)'; X.textAlign='center'; X.shadowColor='rgba(0,0,0,.45)'; X.shadowBlur=5; X.fillText('⭐ faltam '+left+' para a roleta',C.width/2,82); X.restore(); }
+
+  var hs=getHS(); if(hs>0){ X.save(); X.fillStyle='rgba(65,38,111,.45)'; rr(C.width-92,10,82,30,16); X.fill(); X.font=Math.max(12,C.width*.028)+'px Georgia'; X.fillStyle='#fff2a8'; X.textAlign='center'; X.fillText('🏆 '+hs,C.width-51,30); X.restore(); }
+
+  for(var i=scorePops.length-1;i>=0;i--){ var p=scorePops[i]; p.life-=.035; p.y-=1.4; X.save(); X.globalAlpha=Math.max(p.life,0); X.font='bold 26px Georgia'; X.fillStyle='#fff2a8'; X.shadowColor='#ff4ea1'; X.shadowBlur=12; X.textAlign='center'; X.fillText('+1',p.x,p.y); X.restore(); if(p.life<=0)scorePops.splice(i,1); }
+
+  if(sc===0&&obs.length===0){ X.save(); X.font='bold '+Math.max(17,C.width*.047)+'px Georgia'; var pulse=.65+.35*Math.sin(t*3); X.fillStyle='rgba(255,255,255,'+pulse+')'; X.textAlign='center'; X.shadowColor='#ff4ea1'; X.shadowBlur=16; X.fillText('👆 Toque para voar!',C.width/2,C.height*.62); X.restore(); }
+}
+
+// Logo pré-carregado
+var _logoImg = null;
+var _logoReady = false;
+(function(){
+  var img = new Image();
+  img.onload = function(){ _logoImg = img; _logoReady = true; };
+  img.src = 'data:image/jpeg;base64,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';
+})();
+
+var _offC = null, _offCtx = null;
+function drawBird(){
+  var r = bird.r;
+  X.save();
+  X.translate(bird.x, bird.y);
+  var angle = Math.min(Math.max(bird.vy/(JV_S)*-35,-28),72)*Math.PI/180;
+  X.rotate(angle);
+
+  // sombra projetada
+  X.save();
+  X.globalAlpha=0.25;
+  X.fillStyle='#000';
+  X.beginPath(); X.ellipse(r*.3, r*1.1, r*.7, r*.2, 0, 0, Math.PI*2); X.fill();
+  X.restore();
+
+  // círculo preto de fundo (logo tem fundo preto)
+  X.beginPath(); X.arc(0, 0, r, 0, Math.PI*2);
+  X.fillStyle='#0A0A0A'; X.fill();
+
+  // logo dentro do círculo — offscreen canvas pré-cacheado (desenhado 1x só)
+  if(_logoReady && _logoImg){
+    var lr = r * 0.90;
+    var sz = Math.ceil(lr * 2);
+    if(!_offC || _offC.width !== sz){
+      _offC = document.createElement('canvas');
+      _offC.width = sz; _offC.height = sz;
+      _offCtx = _offC.getContext('2d');
+      _offCtx.beginPath();
+      _offCtx.arc(lr, lr, lr, 0, Math.PI*2);
+      _offCtx.closePath();
+      _offCtx.clip();
+      _offCtx.drawImage(_logoImg, 0, 0, sz, sz);
+    }
+    X.drawImage(_offC, -lr, -lr, sz, sz);
+  }
+
+  // borda dourada por cima do logo
+  X.beginPath(); X.arc(0, 0, r, 0, Math.PI*2);
+  X.strokeStyle='#C9A84C';
+  X.lineWidth=Math.max(2, r*0.12);
+  X.stroke();
+
+  X.restore();
+}
+
+function drawCartoonBug(cx,cy,fs,flip,phase){
+  X.save(); X.translate(cx,cy); if(flip) X.scale(1,-1);
+  var wob=Math.sin(phase)*3;
+  X.translate(0,wob);
+  X.shadowColor='rgba(70,20,20,.35)'; X.shadowBlur=4;
+  X.fillStyle='rgba(255,255,255,.35)'; X.beginPath(); X.ellipse(-fs*.18,-fs*.18,fs*.22,fs*.11,-.8,0,Math.PI*2); X.fill(); X.beginPath(); X.ellipse(fs*.18,-fs*.18,fs*.22,fs*.11,.8,0,Math.PI*2); X.fill();
+  var body=X.createRadialGradient(-fs*.12,-fs*.12,2,0,0,fs*.38); body.addColorStop(0,'#ff9c72'); body.addColorStop(.65,'#d84343'); body.addColorStop(1,'#802020');
+  X.fillStyle=body; X.beginPath(); X.ellipse(0,0,fs*.33,fs*.28,0,0,Math.PI*2); X.fill();
+  X.fillStyle='#fff'; X.beginPath(); X.arc(-fs*.12,-fs*.06,fs*.075,0,Math.PI*2); X.arc(fs*.12,-fs*.06,fs*.075,0,Math.PI*2); X.fill();
+  X.fillStyle='#25120c'; X.beginPath(); X.arc(-fs*.1,-fs*.05,fs*.035,0,Math.PI*2); X.arc(fs*.14,-fs*.05,fs*.035,0,Math.PI*2); X.fill();
+
+  X.restore();
+}
+function drawObs(ob){
+  var w=58, fs=Math.max(24,C.width*.07), phase=performance.now()/180+ob.x*.03;
+  var tubeG=X.createLinearGradient(ob.x,0,ob.x+w,0); tubeG.addColorStop(0,'#ff6b52'); tubeG.addColorStop(.5,'#ffb14f'); tubeG.addColorStop(1,'#ff5a91');
+  function tube(y,h,flip){
+    X.save(); X.fillStyle='rgba(60,18,18,.22)'; rr(ob.x+5,y+5,w,h,18); X.fill(); X.fillStyle=tubeG; rr(ob.x,y,w,h,18); X.fill();
+    X.strokeStyle='rgba(255,255,255,.45)'; X.lineWidth=2; X.stroke();
+    X.fillStyle='rgba(255,255,255,.24)'; rr(ob.x+7,y+8,9,Math.max(8,h-16),8); X.fill();
+    X.fillStyle='#fff2a8'; if(!flip){ rr(ob.x-5,y+h-9,w+10,12,8); X.fill(); } else { rr(ob.x-5,y-3,w+10,12,8); X.fill(); }
+    X.restore();
+  }
+  tube(0,ob.topY,false); tube(ob.topY+ob.gap,C.height-(ob.topY+ob.gap),true);
+  var cx=ob.x+w/2;
+  for(var y=ob.topY-28;y>18;y-=fs*.98) drawCartoonBug(cx,y,fs,true,phase+y*.03);
+  for(var y2=ob.topY+ob.gap+fs*.75;y2<C.height-44;y2+=fs*.98) drawCartoonBug(cx,y2,fs,false,phase+y2*.03);
+  X.save(); X.shadowColor='#fff2a8'; X.shadowBlur=10; X.fillStyle='rgba(255,242,168,.75)'; rr(ob.x-4,ob.topY-3,w+8,5,3); X.fill(); rr(ob.x-4,ob.topY+ob.gap-2,w+8,5,3); X.fill(); X.restore();
+}
+
+function hits(ob){
+  var bx=bird.x, by=bird.y, br=bird.r*0.7;
+  var ox=ob.x, ow=46;
+  if(bx+br<ox || bx-br>ox+ow) return false;
+  if(by-br<ob.topY || by+br>ob.topY+ob.gap) return true;
+  return false;
+}
+
+function curSpeed(){
+  // velocidade cresce suavemente: 0pts=SPD_MIN, 25pts+=SPD_MAX
+  var t = Math.min(sc/25, 1);
+  return SPD_MIN + t*(SPD_MAX-SPD_MIN);
+}
+function curInterval(){
+  var t = Math.min(sc/25, 1);
+  return SI_START - t*(SI_START-SI_MIN);
+}
+
+function step(ts){
+  if(!running) return;
+
+  // deltaTime em segundos, cap 100ms pra evitar saltos grandes
+  if(!lastTime) lastTime = ts;
+  var dt = Math.min((ts-lastTime)/1000, 0.05);
+  lastTime = ts;
+
+  // spawn por tempo
+  if(!lastSpawn) lastSpawn = ts;
+  if(ts - lastSpawn > curInterval()){
+    spawnObs();
+    lastSpawn = ts;
+  }
+
+  // física
+  bird.vy += GRAV_S * dt;
+  bird.y  += bird.vy * dt;
+
+  var spd = curSpeed();
+  for(var i=obs.length-1;i>=0;i--){
+    obs[i].x -= spd * dt;
+    if(!obs[i].passed && obs[i].x+48 < bird.x){ obs[i].passed=true; sc++; addScorePop(bird.x+34,bird.y-20); }
+    if(obs[i].x+48 < 0){ obs.splice(i,1); continue; }
+    if(hits(obs[i])){ endGame(); return; }
+  }
+
+  if(bird.y+bird.r > C.height-36 || bird.y-bird.r < 0){ endGame(); return; }
+
+  drawBg(ts);
+  obs.forEach(drawObs);
+  drawBird();
+  raf = requestAnimationFrame(step);
+}
+
+function endGame(){
+  running=false;
+  cancelAnimationFrame(raf);
+  var hs=getHS();
+  var isRec=sc>hs&&sc>0;
+  if(isRec) setHS(sc);
+  refreshHS();
+
+  if(sc>=NEED){
+    if(isRec){
+      $('recNum').textContent=sc;
+      showConfetti();
+      setTimeout(function(){ go('sRecord'); },400);
+      setTimeout(function(){ openRoleta(false); },2200);
+    } else {
+      setTimeout(function(){ openRoleta(false); },500);
+    }
+  } else {
+    var best=Math.max(hs,sc);
+    $('overScore').textContent=sc+' ponto'+(sc!==1?'s':'')+(hs>0?' | 🏆 '+best:'');
+    $('overHint').textContent=sc===0?'Toque na tela para fazer o brigadeiro subir!':'Passe '+NEED+' inimigos para girar a roleta!';
+    setTimeout(function(){ go('sOver'); },400);
+  }
+}
+
+function startGame(){
+  go('sGame');
+  if(!C) initC();
+  cancelAnimationFrame(raf);
+  obs=[]; running=true;
+  resetBird();
+  initParticles();
+  setTimeout(spawnObs,1800);
+  raf=requestAnimationFrame(step);
+}
+
+// ── ROLETA ──
+// ── PRÊMIOS com pesos (sem roleta visual) ──
+// cupom=55% | doces=30% | boasorte=10% | almoco=5% (só sexta, 1x/dia)
+// Segmentos visuais da roleta — 1 de cada, ordem fixa
+var SEGS=[
+  {tipo:'cupom',     label:'5% OFF',      color:'#1a3a1a', tc:'#7fff7f'},
+  {tipo:'pudim',     label:'🍮 Pudim',    color:'#8B6914', tc:'#fff'   },
+  {tipo:'boasorte',  label:'Boa Sorte',   color:'#111',    tc:'#888'   },
+  {tipo:'brigadeiro',label:'🍫 Brigadeiro',color:'#3a1a05',tc:'#E8C96A'},
+  {tipo:'almoco',    label:'🍽️ Almoço',   color:'#1a1a3a', tc:'#9fc8ff'},
+  {tipo:'cookie',    label:'🍪 Cookie',   color:'#6b4c1e', tc:'#E8C96A'},
+  {tipo:'bolo',      label:'🎂 Bolo',     color:'#5c2d0a', tc:'#E8C96A'},
+];
+var SA=(2*Math.PI)/SEGS.length;
+// Pesos invisíveis para o sorteio: cupom=70% | doces=20% | boasorte=7% | almoco=3%
+var PESOS={cupom:70, pudim:5, cookie:5, brigadeiro:5, bolo:5, boasorte:7, almoco:3};
+var RC,RX,rAng=0,rSpinning=false,lastWin=Date.now(),WIN_MS=600000;
+
+function isSexta(){
+  return new Date().getDay()===5;
+}
+function almocoPodeGanhar(){
+  if(!isSexta()) return false;
+  try{
+    var last=localStorage.getItem('ab_almoco_last');
+    if(!last) return true;
+    var d=new Date(parseInt(last)), hoje=new Date();
+    return d.getDate()!==hoje.getDate()||d.getMonth()!==hoje.getMonth()||d.getFullYear()!==hoje.getFullYear();
+  }catch(e){ return true; }
+}
+
+var forceWinNext=false;
+
+function openRoleta(force){
+  forceWinNext=!!force;
+  go('sRol');
+  RC=$('rc'); RX=RC.getContext('2d');
+  var sz=RC.getBoundingClientRect();
+  RC.width=sz.width||260; RC.height=sz.height||260;
+  rAng=0; rSpinning=false;
+  $('btnSpin').disabled=false;
+  drawRoleta(0);
+}
+
+function drawRoleta(a){
+  var cx=RC.width/2, cy=RC.height/2, r=Math.min(cx,cy)-4;
+  RX.clearRect(0,0,RC.width,RC.height);
+  // sombra externa
+  RX.save(); RX.shadowColor='rgba(201,168,76,.4)'; RX.shadowBlur=10;
+  RX.beginPath(); RX.arc(cx,cy,r,0,Math.PI*2); RX.fillStyle='#1a1200'; RX.fill();
+  RX.restore();
+  // segmentos
+  SEGS.forEach(function(seg,i){
+    var s=a+i*SA-Math.PI/2, e=s+SA;
+    RX.beginPath(); RX.moveTo(cx,cy); RX.arc(cx,cy,r,s,e); RX.closePath();
+    RX.fillStyle=seg.color; RX.fill();
+    RX.strokeStyle='#C9A84C'; RX.lineWidth=1.5; RX.stroke();
+    RX.save();
+    RX.translate(cx,cy); RX.rotate(s+SA/2);
+    RX.textAlign='right';
+    RX.font='bold '+Math.max(9,r*.10)+'px Georgia';
+    RX.fillStyle=seg.tc;
+    RX.fillText(seg.label, r-8, 4);
+    RX.restore();
+  });
+  // centro dourado
+  var cg=RX.createRadialGradient(cx,cy,2,cx,cy,18);
+  cg.addColorStop(0,'#f5d78e'); cg.addColorStop(1,'#8B6914');
+  RX.beginPath(); RX.arc(cx,cy,18,0,Math.PI*2);
+  RX.fillStyle=cg; RX.fill();
+  RX.strokeStyle='#fff'; RX.lineWidth=2; RX.stroke();
+}
+
+function sortearTipo(){
+  // sorteia por peso invisível, excluindo almoço se não for sexta
+  var pool=[];
+  Object.keys(PESOS).forEach(function(tipo){
+    if(tipo==='almoco' && !almocoPodeGanhar()) return;
+    if(forceWinNext && tipo==='boasorte') return;
+    var p=PESOS[tipo];
+    for(var i=0;i<p;i++) pool.push(tipo);
+  });
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function spin(){
+  if(rSpinning) return;
+  rSpinning=true; $('btnSpin').disabled=true;
+  // 1. sorteia o tipo por peso
+  var tipoSorteado=sortearTipo();
+  forceWinNext=false;
+  // 2. acha o índice do segmento visual correspondente
+  var targetIdx=0;
+  for(var i=0;i<SEGS.length;i++){
+    if(SEGS[i].tipo===tipoSorteado){ targetIdx=i; break; }
+  }
+  // 3. calcula ângulo para parar nesse segmento (centro do segmento, ponteiro no topo)
+  var targetAng = -(targetIdx*SA + SA/2) + Math.PI/2*0;
+  var voltas = (5+Math.floor(Math.random()*3))*Math.PI*2;
+  var total = voltas + (targetAng - (rAng % (Math.PI*2)));
+  var dur=4500+Math.random()*1000, t0=performance.now(), a0=rAng;
+  function ease(t){ return 1-Math.pow(1-t,4); }
+  function anim(now){
+    var t=Math.min((now-t0)/dur,1);
+    rAng=a0+total*ease(t);
+    drawRoleta(rAng);
+    if(t<1){ requestAnimationFrame(anim); }
+    else {
+      rSpinning=false;
+      setTimeout(function(){ showResult(SEGS[targetIdx]); },600);
+    }
+  }
+  requestAnimationFrame(anim);
+}
+
+function gerarCodigo(){
+  var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var c='AB';
+  for(var i=0;i<6;i++) c+=chars[Math.floor(Math.random()*chars.length)];
+  return c;
+}
+function salvarCupom(codigo,exp){
+  try{
+    var lista=JSON.parse(localStorage.getItem('ab_cupons')||'[]');
+    lista.push({codigo:codigo,criado:Date.now(),exp:exp,nome:'',fone:'',usado:false});
+    localStorage.setItem('ab_cupons',JSON.stringify(lista));
+  }catch(e){}
+}
+var DOCE_LABEL={
+  pudim:      {emoji:'🍮', nome:'Fatia de Pudim'},
+  cookie:     {emoji:'🍪', nome:'Cookie Artesanal'},
+  brigadeiro: {emoji:'🍫', nome:'Brigadeiro Gourmet'},
+  bolo:       {emoji:'🎂', nome:'Fatia de Bolo'},
+};
+var ALPHABRI_WPP='5511997178760';
+// URL do Google Apps Script — substitua após implantar
+var SHEETS_URL='https://script.google.com/macros/s/AKfycbwpEqkhMCi-gTa6dRTgqdu19Hdinlo-aHJ1nxMoI9cfDbN6pE3Iv2nJLmJuUxu7n8tikg/exec';
+
+function enviarParaSheets(dados){
+  if(!SHEETS_URL||SHEETS_URL==='COLE_AQUI_A_URL_DO_APPS_SCRIPT') return;
+  try{
+    fetch(SHEETS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(dados),
+      mode:'no-cors'
+    });
+  }catch(e){}
+}
+var _premioAtual=null;
+
+function fmtDataHora(ts){
+  var d=new Date(ts);
+  var dd=d.getDate().toString().padStart(2,'0');
+  var mm=(d.getMonth()+1).toString().padStart(2,'0');
+  var aa=d.getFullYear();
+  var hh=d.getHours().toString().padStart(2,'0');
+  var mi=d.getMinutes().toString().padStart(2,'0');
+  return dd+'/'+mm+'/'+aa+' às '+hh+':'+mi;
+}
+
+function salvarHistorico(entry){
+  try{
+    var h=JSON.parse(localStorage.getItem('ab_hist')||'[]');
+    h.push(entry);
+    if(h.length>200) h=h.slice(h.length-200);
+    localStorage.setItem('ab_hist',JSON.stringify(h));
+  }catch(e){}
+}
+
+function showResult(premio){
+  var tipo=premio.tipo;
+  var agora=Date.now();
+  var entry={tipo:tipo,ts:agora,nome:'',fone:'',codigo:''};
+  $('resValidade').textContent='';
+  $('btnWpp').style.display='inline-block';
+
+  if(tipo==='cupom'){
+    var cod=gerarCodigo();
+    var exp=agora+(5*24*60*60*1000);
+    salvarCupom(cod,exp);
+    entry.codigo=cod; entry.exp=exp;
+    $('sResult').className='screen win';
+    $('resEmoji').textContent='🏷️';
+    $('resHl').textContent='5% de Desconto!';
+    $('resPrize').textContent=cod;
+    $('resSub').textContent='Cupom válido por 5 dias na sua próxima compra!';
+    $('resValidade').textContent='⏳ Válido até '+fmtDataHora(exp);
+    showConfetti();
+  } else if(tipo==='almoco'){
+    try{ localStorage.setItem('ab_almoco_last',agora.toString()); }catch(e){}
+    var expAlm=new Date(); expAlm.setHours(23,59,59,0);
+    entry.exp=expAlm.getTime();
+    $('sResult').className='screen win';
+    $('resEmoji').textContent='🍽️';
+    $('resHl').textContent='Você ganhou!';
+    $('resPrize').textContent='Prato do Dia da Casa';
+    $('resSub').textContent='Mostre essa mensagem para nossa equipe!';
+    $('resValidade').textContent='⏳ Válido hoje até as 23:59';
+    showConfetti();
+  } else if(tipo==='boasorte'){
+    $('sResult').className='screen lose';
+    $('resEmoji').textContent='🎲';
+    $('resHl').textContent='Quase!';
+    $('resPrize').textContent='';
+    $('resSub').textContent='Não foi dessa vez, mas volte e tente novamente!';
+    $('btnWpp').style.display='none';
+  } else if(DOCE_LABEL[tipo]){
+    var dl=DOCE_LABEL[tipo];
+    var expDoce=new Date(); expDoce.setHours(23,59,59,0);
+    entry.exp=expDoce.getTime();
+    $('sResult').className='screen win';
+    $('resEmoji').textContent=dl.emoji;
+    $('resHl').textContent='Você ganhou!';
+    $('resPrize').textContent=dl.nome;
+    $('resSub').textContent='Mostre essa mensagem para nossa equipe!';
+    $('resValidade').textContent='⏳ Válido hoje até as 23:59';
+    showConfetti();
+  }
+  _premioAtual=Object.assign({},entry);
+  salvarHistorico(entry);
+  go('sResult');
+}
+
+function irCadastro(){
+  $('cadNome').value='';
+  $('cadFone').value='';
+  // máscara fone
+  $('cadFone').oninput=function(){
+    var v=this.value.replace(/\D/g,'');
+    if(v.length<=2) this.value=v.length?'('+v:'';
+    else if(v.length<=7) this.value='('+v.slice(0,2)+') '+v.slice(2);
+    else if(v.length<=11) this.value='('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);
+    else this.value='('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7,11);
+  };
+  go('sCadastro');
+}
+
+function enviarWpp(){
+  var nome=$('cadNome').value.trim()||'Cliente';
+  var fone=$('cadFone').value.replace(/\D/g,'');
+  if(fone.length<10){ alert('Digite um WhatsApp válido!'); return; }
+  if(fone.length===10||fone.length===11) fone='55'+fone;
+
+  var p=_premioAtual;
+  // salvar nome/fone no histórico e cupom
+  if(_premioAtual){
+    _premioAtual.nome=nome; _premioAtual.fone=fone;
+    try{
+      var h=JSON.parse(localStorage.getItem('ab_hist')||'[]');
+      if(h.length){ h[h.length-1].nome=nome; h[h.length-1].fone=fone; }
+      localStorage.setItem('ab_hist',JSON.stringify(h));
+      if(p.tipo==='cupom'){
+        var cl=JSON.parse(localStorage.getItem('ab_cupons')||'[]');
+        for(var i=cl.length-1;i>=0;i--){
+          if(cl[i].codigo===p.codigo){ cl[i].nome=nome; cl[i].fone=fone; break; }
+        }
+        localStorage.setItem('ab_cupons',JSON.stringify(cl));
+      }
+    }catch(e){}
+  }
+
+  // Montar objeto para o Google Sheets
+  var PREMIO_LABEL={cupom:'5% Desconto',almoco:'Prato do Dia',pudim:'Fatia de Pudim',
+    cookie:'Cookie Artesanal',brigadeiro:'Brigadeiro Gourmet',bolo:'Fatia de Bolo',boasorte:'Boa Sorte'};
+  var dadosSheets={
+    dataHora: fmtDataHora(p.ts||Date.now()),
+    nome:     nome,
+    fone:     fone,
+    tipo:     p.tipo,
+    premio:   PREMIO_LABEL[p.tipo]||p.tipo,
+    codigo:   p.codigo||'',
+    validade: p.exp ? fmtDataHora(p.exp) : (p.tipo==='boasorte'?'':fmtDataHora(new Date().setHours(23,59,59,0)))
+  };
+  enviarParaSheets(dadosSheets);
+
+  // Só salva no Sheets e volta para início
+  setTimeout(function(){ go('sStart'); },600);
+}
+
+// ===== ADMIN =====
+var _tapCount=0, _tapTimer=null;
+function adminTap(){
+  _tapCount++;
+  clearTimeout(_tapTimer);
+  if(_tapCount>=5){ _tapCount=0; openAdmin(); return; }
+  _tapTimer=setTimeout(function(){ _tapCount=0; },2000);
+}
+
+function adminTab(aba){
+  $('painelCupons').style.display=aba==='cupons'?'block':'none';
+  $('painelHistorico').style.display=aba==='historico'?'block':'none';
+  $('painelLembrar').style.display=aba==='lembrar'?'block':'none';
+  ['tabCupons','tabHistorico','tabLembrar'].forEach(function(id){ $(id).className='adm-tab'; });
+  $('tab'+aba.charAt(0).toUpperCase()+aba.slice(1)).className='adm-tab on';
+  if(aba==='cupons') renderAdminCupons();
+  if(aba==='historico') renderAdminHistorico();
+  if(aba==='lembrar') renderAdminLembrar();
+}
+
+function renderAdminCupons(){
+  var lista=[]; try{ lista=JSON.parse(localStorage.getItem('ab_cupons')||'[]'); }catch(e){}
+  var html='', agora=Date.now();
+  if(!lista.length){ html='<span style="color:#666">Nenhum cupom gerado ainda.</span>'; }
+  else {
+    lista.slice().reverse().forEach(function(c){
+      var expirado=agora>c.exp;
+      html+='<div style="border-bottom:1px solid #1a1a1a;padding:6px 0">'+
+        '<span style="font-family:monospace;font-size:14px;color:'+(expirado?'#444':'#C9A84C')+'">'+c.codigo+'</span>'+
+        ' <span style="font-size:10px;color:'+(expirado?'#f55':'#7f7')+'">'+
+        (expirado?'EXPIRADO':'até '+fmtDataHora(c.exp))+'</span><br>'+
+        (c.nome?'<span style="font-size:10px;color:#aaa">👤 '+c.nome+(c.fone?' · 📱 '+c.fone:'')+'</span><br>':'')+
+        '<span style="font-size:10px;color:#555">Gerado '+fmtDataHora(c.criado)+'</span>'+
+        '</div>';
+    });
+  }
+  $('adminList').innerHTML=html;
+}
+
+function renderAdminHistorico(){
+  var h=[]; try{ h=JSON.parse(localStorage.getItem('ab_hist')||'[]'); }catch(e){}
+  var html='';
+  var TIPO_LABEL={cupom:'🏷️ 5% Desconto',pudim:'🍮 Pudim',cookie:'🍪 Cookie',brigadeiro:'🍫 Brigadeiro',bolo:'🎂 Bolo',almoco:'🍽️ Almoço',boasorte:'🎲 Boa Sorte'};
+  if(!h.length){ html='<span style="color:#666">Nenhum jogo registrado ainda.</span>'; }
+  else {
+    h.slice().reverse().forEach(function(e){
+      html+='<div class="adm-lembrar-row">'+
+        '<span style="color:#C9A84C;font-size:12px">'+( TIPO_LABEL[e.tipo]||e.tipo)+'</span>'+
+        (e.codigo?' <span style="font-family:monospace;font-size:11px;color:#aaa">('+e.codigo+')</span>':'')+'<br>'+
+        (e.nome?'<span style="font-size:10px;color:#aaa">👤 '+e.nome+(e.fone?' · 📱 '+e.fone:'')+'</span><br>':'')+
+        '<span style="font-size:10px;color:#555">📅 '+fmtDataHora(e.ts)+'</span>'+
+        '</div>';
+    });
+  }
+  $('adminHistList').innerHTML=html;
+}
+
+function renderAdminLembrar(){
+  var lista=[]; try{ lista=JSON.parse(localStorage.getItem('ab_cupons')||'[]'); }catch(e){}
+  var agora=Date.now(), doi=2*24*60*60*1000;
+  var prox=lista.filter(function(c){ return c.fone && agora<c.exp && (c.exp-agora)<=doi; });
+  var html='';
+  if(!prox.length){ html='<span style="color:#666">Nenhum cliente para lembrar agora.</span>'; }
+  else {
+    prox.forEach(function(c){
+      var msg='Olá '+( c.nome||'')+'! 🎉\nSeu cupom de *5% de desconto* no AlphaBri Bistrô vence em '+fmtDataHora(c.exp)+'.\n🏷️ Código: *'+c.codigo+'*\nNão perca! 😊';
+      var url='https://wa.me/55'+c.fone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg);
+      html+='<div class="adm-lembrar-row">'+
+        '<span style="color:#C9A84C;font-size:12px">'+( c.nome||'Sem nome')+'</span>'+
+        ' <span style="font-size:10px;color:#f5a623">vence '+fmtDataHora(c.exp)+'</span><br>'+
+        '<span style="font-size:10px;color:#aaa">📱 '+c.fone+'</span> '+
+        '<span style="font-family:monospace;font-size:10px;color:#666">|'+c.codigo+'</span><br>'+
+        '<a href="'+url+'" target="_blank" style="font-size:11px;color:#25a550;text-decoration:none">📲 Enviar lembrete pelo WhatsApp</a>'+
+        '</div>';
+    });
+  }
+  $('adminLembrarList').innerHTML=html;
+}
+
+function openAdmin(){
+  renderAdminCupons();
+  adminTab('cupons');
+  verificarDocesHoje();
+  go('sAdmin');
+}
+
+function verificarDocesHoje(){
+  try{
+    var h=JSON.parse(localStorage.getItem('ab_hist')||'[]');
+    var agora=Date.now();
+    var hoje=new Date();
+    var inicioDia=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()).getTime();
+    var DOCES=['pudim','cookie','brigadeiro','bolo'];
+    // pega doces de hoje que têm nome/fone cadastrado
+    var pendentes=h.filter(function(e){
+      return DOCES.indexOf(e.tipo)>=0 && e.ts>=inicioDia && e.fone && e.fone.length>=10;
+    });
+    var el=$('alertaDoces');
+    if(!pendentes.length){ el.style.display='none'; return; }
+    var html='<div class="alerta-doce">'+
+      '<div style="color:#C9A84C;font-size:12px;font-weight:700;margin-bottom:8px">⚠️ '+pendentes.length+' doce'+(pendentes.length>1?'s':'')+' ganho'+(pendentes.length>1?'s':'')+' hoje — avise o cliente!</div>';
+    var EMOJI={pudim:'🍮',cookie:'🍪',brigadeiro:'🍫',bolo:'🎂'};
+    var NOME_PREMIO={pudim:'Fatia de Pudim',cookie:'Cookie Artesanal',brigadeiro:'Brigadeiro Gourmet',bolo:'Fatia de Bolo'};
+    pendentes.forEach(function(e){
+      var fone=e.fone.replace(/\D/g,'');
+      if(fone.length===10||fone.length===11) fone='55'+fone;
+      var msg='🎉 Olá, '+(e.nome||'')+'!\n'+
+        'Você ganhou *'+(NOME_PREMIO[e.tipo]||e.tipo)+'* no AlphaBri Bistrô! '+(EMOJI[e.tipo]||'')+'\n\n'+
+        '⏳ Válido hoje até as *23:59*\n\n'+
+        'Venha retirar seu prêmio!\n'+
+        '📍 Calçada das Anêmonas, 15 – Centro Comercial Alphaville\n'+
+        '🕐 Seg a Sáb das 10h às 18h';
+      var url='https://wa.me/'+fone+'?text='+encodeURIComponent(msg);
+      var h2=new Date(e.ts);
+      var horario=h2.getHours().toString().padStart(2,'0')+':'+h2.getMinutes().toString().padStart(2,'0');
+      html+='<div style="border-top:1px solid #2a2a2a;padding-top:7px;margin-top:7px">'+
+        '<span style="font-size:12px;color:#fff">'+( EMOJI[e.tipo]||'')+' '+( e.nome||'Sem nome')+' — '+horario+'</span><br>'+
+        '<span style="font-size:10px;color:#888">📱 '+e.fone+'</span><br>'+
+        '<a href="'+url+'" target="_blank" style="font-size:11px;color:#25a550;text-decoration:none;font-weight:700">📲 Enviar WhatsApp agora</a>'+
+        '</div>';
+    });
+    html+='</div>';
+    el.innerHTML=html;
+    el.style.display='block';
+    // atualizar badge na aba lembrar
+    var tabLembrar=$('tabLembrar');
+    if(tabLembrar) tabLembrar.innerHTML='⏰ Lembrar'+(pendentes.length?'<span class="adm-badge">'+pendentes.length+'</span>':'')+'';
+  }catch(err){}
+}
+function adminClearExpired(){
+  try{
+    var agora=Date.now();
+    var lista=JSON.parse(localStorage.getItem('ab_cupons')||'[]');
+    lista=lista.filter(function(c){ return agora<=c.exp; });
+    localStorage.setItem('ab_cupons',JSON.stringify(lista));
+  }catch(e){}
+  renderAdminCupons();
+}
+function adminClearAll(){
+  try{ localStorage.setItem('ab_cupons','[]'); }catch(e){}
+  renderAdminCupons();
+}
+function adminClearHist(){
+  try{ localStorage.setItem('ab_hist','[]'); }catch(e){}
+  renderAdminHistorico();
+}
+
+function showConfetti(){
+  var w=$('confetti'); w.innerHTML='';
+  var cols=['#C9A84C','#E8C96A','#fff','#8B6914','#f5d78e'];
+  for(var i=0;i<60;i++){
+    var d=document.createElement('div');
+    d.className='cp';
+    d.style.cssText='left:'+Math.random()*100+'%;background:'+cols[Math.floor(Math.random()*cols.length)]+
+      ';width:'+(6+Math.random()*8)+'px;height:'+(6+Math.random()*8)+'px'+
+      ';border-radius:'+(Math.random()>.5?'50%':'2px')+
+      ';animation-duration:'+(1.5+Math.random()*2.5)+'s'+
+      ';animation-delay:'+(Math.random()*.8)+'s;';
+    w.appendChild(d);
+  }
+  setTimeout(function(){ w.innerHTML=''; },4000);
+}
+</script>
+</body>
+</html>
